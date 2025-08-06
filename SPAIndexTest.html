@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vantage</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .page {
+      display: none;
+      position: absolute;
+      top: 50px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 50px);
+      padding: 20px;
+      box-sizing: border-box;
+      background: #f0f0f0;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background: #333;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+
+    nav button {
+      margin-right: 10px;
+      padding: 6px 12px;
+      font-size: 16px;
+      background: #555;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    nav button:hover {
+      background: #777;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <button data-page="home">Vantage | Home</button>
+    <button data-page="tokenValidation">Token Validation</button>
+    <button data-page="payment">Payment Test</button>
+  </nav>
+
+  <div id="home" class="page active" data-title="Vantage | Home">
+    <h1 id="page-title">Vantage | Home</h1>
+    <p>Welcome to the Home page!</p>
+  </div>
+
+  <div id="tokenValidation" class="page" data-title="Token Validation">
+    <h1 id="page-title">Token Validation</h1>
+    <p>This is the Token Validation page.</p>
+  </div>
+
+  <div id="payment" class="page" data-title="Payment Test">
+    <h1 id="page-title">Payment Test</h1>
+    <p>Get in touch on the Payment Test page.</p>
+  </div>
+
+  <script>
+    (function () {
+      // SPA navigation logic
+      const buttons = document.querySelectorAll('nav button');
+      const pages = document.querySelectorAll('.page');
+      let currentPageId = 'home';
+
+      function showPage(pageId) {
+        if (pageId === currentPageId) return;
+
+        // Hide all pages
+        pages.forEach(page => page.classList.remove('active'));
+
+        // Show selected page
+        const page = document.getElementById(pageId);
+        if (!page) return;
+        page.classList.add('active');
+
+        // Update document title based on active page's data-title attribute
+        const newTitle = page.getAttribute('data-title');
+        if (newTitle) {
+          document.title = newTitle;
+        }
+
+        currentPageId = pageId;
+        evaluateIntercept();
+      }
+
+      buttons.forEach(button => {
+        button.addEventListener('click', () => {
+          const pageId = button.getAttribute('data-page');
+          showPage(pageId);
+        });
+      });
+
+      // Qualtrics intercept loading/unloading logic
+
+      const qualtrics_src = "https://znxxxxxxxxxxxxxxx-wellsfargocxsandbox.siteintercept.qualtrics.com/SIE/?Q_ZID=ZN_XXXXXXXXXXXXXXX";
+      let script;
+      let interceptLoaded = false;
+
+      function loadIntercept() {
+        if (interceptLoaded) return;
+
+        // Initialize QSI config safely
+        window.QSI = window.QSI || {};
+        window.QSI.config = window.QSI.config || {};
+        window.QSI.global = window.QSI.global || {};
+
+        window.QSI.config.enableSecureVariables = true;
+        window.QSI.global.enableJSSanitization = true;
+
+        // Create script and append to load intercept
+        script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = qualtrics_src;
+
+        if (document.body) {
+          document.body.appendChild(script);
+        } else {
+          window.addEventListener("load", () => {
+            document.body.appendChild(script);
+          });
+        }
+
+        interceptLoaded = true;
+        console.log("Qualtrics intercept loaded");
+      }
+
+      function unloadIntercept() {
+        if (!interceptLoaded) return;
+
+        if (window.QSI && window.QSI.API && typeof QSI.API.unload === "function") {
+          QSI.API.unload();
+          console.log("Qualtrics intercept unloaded");
+        }
+
+        interceptLoaded = false;
+
+        if (script && script.parentNode) {
+          script.parentNode.removeChild(script);
+          script = null;
+        }
+      }
+
+      // Check if we are on Home page to control intercept
+      function isHome() {
+        const titleHasHome = document.title.toLowerCase().includes("home");
+        const el = document.querySelector("#page-title");
+        const elementHasHome = el && el.textContent.trim().toLowerCase() === "home";
+        return titleHasHome || elementHasHome;
+      }
+
+      // Evaluate whether to load or unload the intercept
+      function evaluateIntercept() {
+        if (isHome()) {
+          loadIntercept();
+        } else {
+          unloadIntercept();
+        }
+      }
+
+      // Run initial evaluation on page load
+      evaluateIntercept();
+
+      // Attach MutationObserver to detect any dynamic changes (just in case)
+      const observer = new MutationObserver(evaluateIntercept);
+      observer.observe(document.body, { childList: true, subtree: true });
+
+    })();
+  </script>
+
+</body>
+
+</html>

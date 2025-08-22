@@ -82,11 +82,11 @@
   <script>
     (function () {
       // SPA navigation logic
+      adobeDataLayer = adobeDataLayer || {};
+      adobeDataLayer.psd2_hkma = 'N';
       const buttons = document.querySelectorAll('nav button');
       const pages = document.querySelectorAll('.page');
       let currentPageId = 'home';
-      adobeDataLayer = adobeDataLayer || {};
-      adobeDataLayer.psd2_hkma = 'N';
 
       function showPage(pageId) {
         if (pageId === currentPageId) return;
